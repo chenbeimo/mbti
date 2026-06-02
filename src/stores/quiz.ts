@@ -13,6 +13,13 @@ export const useQuizStore = defineStore('quiz', () => {
   const isCompleted = ref(false)
   const isLoading = ref(false)
 
+  // 完成回调（由 QuizPage 注入）
+  let onFinishCallback: (() => void) | null = null
+
+  function setOnFinish(callback: () => void) {
+    onFinishCallback = callback
+  }
+
   // 计算属性
   const progress = computed(() => {
     const answered = Object.keys(answers.value).length
@@ -20,7 +27,6 @@ export const useQuizStore = defineStore('quiz', () => {
   })
 
   const currentQuestionData = computed(() => {
-    // 确保索引不越界
     const index = Math.min(currentQuestion.value, questions.length - 1)
     return questions[index] || null
   })
@@ -32,8 +38,6 @@ export const useQuizStore = defineStore('quiz', () => {
   const canGoBack = computed(() => currentQuestion.value > 0)
 
   const isLastQuestion = computed(() => currentQuestion.value === questions.length - 1)
-
-  const isAllAnswered = computed(() => answeredCount.value >= questions.length)
 
   // 动作
   function startQuiz() {
@@ -50,23 +54,25 @@ export const useQuizStore = defineStore('quiz', () => {
     // 防止重复提交
     if (isLoading.value || isCompleted.value) return
 
+    // 记录答案
     answers.value[questionId] = optionIndex
     saveProgress()
 
-    // 判断是否所有题目都答完了
-    if (isAllAnswered.value) {
-      // 所有题目答完，不再跳转下一题，直接返回 true 表示完成
-      return true
+    // 检查是否全部答完
+    const allAnswered = Object.keys(answers.value).length >= questions.length
+
+    if (allAnswered) {
+      // 全部答完，触发完成流程
+      completeQuiz()
+      return
     }
 
-    // 还有题目没答完，跳转下一题
+    // 还有题目，跳转下一题
     if (currentQuestion.value < questions.length - 1) {
       setTimeout(() => {
         currentQuestion.value++
       }, 300)
     }
-
-    return false
   }
 
   function goToQuestion(index: number) {
@@ -92,6 +98,11 @@ export const useQuizStore = defineStore('quiz', () => {
       isCompleted.value = true
       isLoading.value = false
       saveProgress()
+
+      // 触发页面跳转回调
+      if (onFinishCallback) {
+        onFinishCallback()
+      }
     }, 3500)
   }
 
@@ -102,6 +113,7 @@ export const useQuizStore = defineStore('quiz', () => {
     isStarted.value = false
     isCompleted.value = false
     isLoading.value = false
+    onFinishCallback = null
     clearQuizProgress()
   }
 
@@ -117,7 +129,6 @@ export const useQuizStore = defineStore('quiz', () => {
     const saved = loadQuizProgress()
     if (saved) {
       answers.value = saved.answers
-      // 确保恢复的索引不越界
       currentQuestion.value = Math.min(saved.currentQuestion, questions.length - 1)
       result.value = saved.result
       isStarted.value = Object.keys(saved.answers).length > 0
@@ -143,7 +154,6 @@ export const useQuizStore = defineStore('quiz', () => {
     answeredCount,
     canGoBack,
     isLastQuestion,
-    isAllAnswered,
 
     // 动作
     startQuiz,
@@ -153,5 +163,6 @@ export const useQuizStore = defineStore('quiz', () => {
     completeQuiz,
     resetQuiz,
     restoreProgress,
+    setOnFinish,
   }
 })

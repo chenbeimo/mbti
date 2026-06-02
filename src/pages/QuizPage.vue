@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuizStore } from '../stores/quiz'
 import GlassCard from '../components/GlassCard.vue'
@@ -14,6 +14,13 @@ if (!quizStore.isStarted) {
   router.replace('/')
 }
 
+// 注册完成回调：答完所有题后自动跳转加载页
+onMounted(() => {
+  quizStore.setOnFinish(() => {
+    router.push('/loading')
+  })
+})
+
 const currentQuestion = computed(() => quizStore.currentQuestionData)
 const selectedAnswer = computed(() => {
   if (!currentQuestion.value) return undefined
@@ -22,23 +29,12 @@ const selectedAnswer = computed(() => {
 
 function handleSelect(index: number) {
   if (!currentQuestion.value) return
-
-  // answerQuestion 返回 true 表示所有题目都答完了
-  const isFinished = quizStore.answerQuestion(currentQuestion.value.id, index)
-
-  if (isFinished) {
-    // 所有题目答完，跳转到加载页
-    handleFinish()
-  }
+  // store 内部会自动判断是否全部答完，答完会触发 completeQuiz + 回调
+  quizStore.answerQuestion(currentQuestion.value.id, index)
 }
 
 function handleBack() {
   quizStore.goBack()
-}
-
-function handleFinish() {
-  quizStore.completeQuiz()
-  router.push('/loading')
 }
 </script>
 
