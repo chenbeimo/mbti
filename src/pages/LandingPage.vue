@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useQuizStore } from '../stores/quiz'
 import GlassCard from '../components/GlassCard.vue'
+import AnimatedCharacter from '../components/AnimatedCharacter.vue'
 
 const router = useRouter()
 const quizStore = useQuizStore()
@@ -20,21 +21,7 @@ const hasProgress = quizStore.restoreProgress()
     <GlassCard class="max-w-md w-full text-center">
       <!-- 动态角色 -->
       <div class="mb-8">
-        <div class="relative inline-block">
-          <div
-            class="w-32 h-32 rounded-full mx-auto animate-float flex items-center justify-center text-6xl"
-            style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(244, 63, 94, 0.3));"
-          >
-            🧠
-          </div>
-          <!-- 眨眼效果 -->
-          <div
-            class="absolute inset-0 flex items-center justify-center text-6xl animate-blink pointer-events-none"
-            style="opacity: 0;"
-          >
-            👁️
-          </div>
-        </div>
+        <AnimatedCharacter />
       </div>
 
       <!-- 标题 -->

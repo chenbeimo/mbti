@@ -8,6 +8,7 @@ import GlassCard from '../components/GlassCard.vue'
 import DimensionBar from '../components/DimensionBar.vue'
 import RadarChart from '../components/RadarChart.vue'
 import SharePoster from '../components/SharePoster.vue'
+import TypeCharacter from '../components/TypeCharacter.vue'
 
 const router = useRouter()
 const quizStore = useQuizStore()
@@ -62,7 +63,10 @@ function handleReset() {
   <div class="min-h-screen p-4 pb-24" v-if="report">
     <!-- 顶部类型展示 -->
     <div class="text-center mb-8 animate-fade-in-up">
-      <div class="text-6xl mb-4">{{ report.avatar }}</div>
+      <!-- 角色立绘 -->
+      <div class="mb-4">
+        <TypeCharacter :type="result.type" :size="140" />
+      </div>
       <h1 class="text-4xl md:text-5xl font-bold gradient-text mb-2">{{ result.type }}</h1>
       <p class="text-xl text-primary-300 mb-1">{{ report.nickname }}</p>
       <p class="text-text-secondary">{{ report.subtitle }}</p>
