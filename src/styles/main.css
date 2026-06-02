@@ -27,12 +27,12 @@
   --color-mint-400: #34d399;
   --color-mint-500: #10b981;
 
-  --color-surface: rgba(255, 255, 255, 0.08);
-  --color-surface-hover: rgba(255, 255, 255, 0.12);
-  --color-surface-active: rgba(255, 255, 255, 0.16);
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #94a3b8;
+  --color-surface: rgba(255, 255, 255, 0.1);
+  --color-surface-hover: rgba(255, 255, 255, 0.15);
+  --color-surface-active: rgba(255, 255, 255, 0.2);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e2e8f0;
+  --color-text-muted: #a5b4c8;
 }
 
 /* ===== 全局样式 ===== */
@@ -43,32 +43,73 @@
 }
 
 html {
-  font-family: 'HarmonyOS Sans', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  font-family: 'PingFang SC', 'HarmonyOS Sans', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* iOS Safari 文字大小自适应 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  min-height: -webkit-fill-available;
   min-height: 100vh;
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #4c1d95 50%, #6d28d9 75%, #7c3aed 100%);
+  background-attachment: fixed;
   color: var(--color-text-primary);
   overflow-x: hidden;
+  /* iOS Safari 安全区域 */
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 /* ===== 毛玻璃效果 ===== */
 .glass {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* iOS 毛玻璃文字阴影增强可读性 */
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(30, 27, 75, 0.85);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ===== 文字可读性增强 ===== */
+h1, h2, h3, h4, h5, h6 {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+p, span, li, label {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* iOS Safari 特殊处理 */
+@supports (-webkit-touch-callout: none) {
+  body {
+    background: #1e1b4b;
+    background-attachment: scroll;
+  }
+
+  /* 用伪元素实现固定背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #4c1d95 50%, #6d28d9 75%, #7c3aed 100%);
+    z-index: -1;
+  }
+
+  .glass {
+    background: rgba(30, 27, 75, 0.75);
+  }
 }
 
 /* ===== 动画 ===== */
@@ -180,6 +221,8 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  /* iOS fallback */
+  color: #c084fc;
 }
 
 .gradient-text-pink {
@@ -187,6 +230,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: #f472b6;
 }
 
 /* ===== 滚动条 ===== */
@@ -225,7 +269,22 @@ body {
 
 /* ===== 选项选中效果 ===== */
 .option-selected {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(244, 63, 94, 0.3)) !important;
-  border-color: rgba(168, 85, 247, 0.5) !important;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(244, 63, 94, 0.35)) !important;
+  border-color: rgba(168, 85, 247, 0.6) !important;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+/* ===== 按钮文字清晰度 ===== */
+button {
+  text-shadow: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+button span {
+  text-shadow: none;
+}
+
+/* ===== iOS 安全区域适配 ===== */
+.safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
