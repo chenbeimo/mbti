@@ -57,6 +57,29 @@ function handleReset() {
   quizStore.resetQuiz()
   router.push('/')
 }
+
+// 快速分享（底部栏按钮）
+async function handleQuickShare() {
+  const shareText = `测测你的灵魂出厂设置！我的MBTI是${result.value.type}（${report.value.nickname}），你呢？\n\n"${report.value.basic.quote}"`
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `我的MBTI是${result.value.type} - ${report.value.nickname}`,
+        text: shareText,
+        url: window.location.origin,
+      })
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        // 降级：跳转分享 tab
+        activeTab.value = 'share'
+      }
+    }
+  } else {
+    // 不支持原生分享，跳转分享 tab
+    activeTab.value = 'share'
+  }
+}
 </script>
 
 <template>
@@ -358,11 +381,12 @@ function handleReset() {
     <div class="fixed bottom-0 left-0 right-0 p-4 glass-strong">
       <div class="max-w-lg mx-auto flex gap-3">
         <button
-          class="flex-1 py-3 rounded-2xl font-bold text-white transition-all duration-300 hover:scale-[1.02]"
+          class="flex-1 py-3 rounded-2xl font-bold text-white transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
           style="background: linear-gradient(135deg, #c084fc, #fb7185);"
-          @click="activeTab = 'share'"
+          @click="handleQuickShare"
         >
-          📤 分享结果
+          <span>📤</span>
+          <span>分享结果</span>
         </button>
         <button
           class="px-6 py-3 rounded-2xl font-bold glass text-text-secondary hover:text-text-primary transition-all duration-300"
