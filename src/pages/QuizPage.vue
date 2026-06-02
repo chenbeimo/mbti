@@ -27,14 +27,24 @@ const selectedAnswer = computed(() => {
   return quizStore.answers[currentQuestion.value.id]
 })
 
+// 判断最后一题是否已作答
+const isLastQuestionAnswered = computed(() => {
+  if (!currentQuestion.value) return false
+  return quizStore.answers[currentQuestion.value.id] !== undefined
+})
+
 function handleSelect(index: number) {
   if (!currentQuestion.value) return
-  // store 内部会自动判断是否全部答完，答完会触发 completeQuiz + 回调
   quizStore.answerQuestion(currentQuestion.value.id, index)
 }
 
 function handleBack() {
   quizStore.goBack()
+}
+
+// 手动完成（保底按钮）
+function handleManualFinish() {
+  quizStore.completeQuiz()
 }
 </script>
 
@@ -68,6 +78,18 @@ function handleBack() {
           :selected-index="selectedAnswer"
           @select="handleSelect"
         />
+
+        <!-- 最后一题：显示完成按钮 -->
+        <div v-if="quizStore.isLastQuestion && isLastQuestionAnswered" class="mt-6">
+          <button
+            class="w-full py-3 rounded-2xl font-bold text-white transition-all duration-300 hover:scale-[1.02]"
+            style="background: linear-gradient(135deg, #c084fc, #fb7185);"
+            :disabled="quizStore.isLoading"
+            @click="handleManualFinish"
+          >
+            {{ quizStore.isLoading ? '计算中...' : '✨ 完成测试，查看结果' }}
+          </button>
+        </div>
       </GlassCard>
     </div>
 

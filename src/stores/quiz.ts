@@ -55,19 +55,23 @@ export const useQuizStore = defineStore('quiz', () => {
     if (isLoading.value || isCompleted.value) return
 
     // 记录答案
-    answers.value[questionId] = optionIndex
+    answers.value = { ...answers.value, [questionId]: optionIndex }
     saveProgress()
 
-    // 检查是否全部答完
-    const allAnswered = Object.keys(answers.value).length >= questions.length
+    // 当前是否是最后一题（用 index 判断，比 Object.keys 更可靠）
+    const isOnLastQuestion = currentQuestion.value >= questions.length - 1
 
-    if (allAnswered) {
-      // 全部答完，触发完成流程
+    // 收集已回答的题目 ID 集合
+    const answeredIds = new Set(Object.keys(answers.value).map(Number))
+    const allQuestionsAnswered = questions.every(q => answeredIds.has(q.id))
+
+    if (isOnLastQuestion && allQuestionsAnswered) {
+      // 最后一题且全部答完 → 触发完成
       completeQuiz()
       return
     }
 
-    // 还有题目，跳转下一题
+    // 还有题目没答，跳转下一题
     if (currentQuestion.value < questions.length - 1) {
       setTimeout(() => {
         currentQuestion.value++
