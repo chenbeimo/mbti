@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuizStore } from '../stores/quiz'
 import GlassCard from '../components/GlassCard.vue'
@@ -22,7 +22,14 @@ const selectedAnswer = computed(() => {
 
 function handleSelect(index: number) {
   if (!currentQuestion.value) return
-  quizStore.answerQuestion(currentQuestion.value.id, index)
+
+  // answerQuestion 返回 true 表示所有题目都答完了
+  const isFinished = quizStore.answerQuestion(currentQuestion.value.id, index)
+
+  if (isFinished) {
+    // 所有题目答完，跳转到加载页
+    handleFinish()
+  }
 }
 
 function handleBack() {
@@ -33,19 +40,6 @@ function handleFinish() {
   quizStore.completeQuiz()
   router.push('/loading')
 }
-
-// 监听答题完成
-watch(
-  () => quizStore.answeredCount,
-  (count) => {
-    if (count === quizStore.totalQuestions) {
-      // 所有题目答完，跳转到加载页
-      setTimeout(() => {
-        handleFinish()
-      }, 500)
-    }
-  }
-)
 </script>
 
 <template>
