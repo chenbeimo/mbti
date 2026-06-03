@@ -19,11 +19,8 @@ const posterRef = ref<HTMLElement | null>(null)
 const isGenerating = ref(false)
 const posterImageUrl = ref<string | null>(null)
 
-// 生成海报图片
 async function generatePosterImage(): Promise<string | null> {
   if (!posterRef.value) return null
-
-  // 临时显示海报用于截图
   posterRef.value.style.display = 'block'
   await nextTick()
 
@@ -33,8 +30,9 @@ async function generatePosterImage(): Promise<string | null> {
       scale: 2,
       useCORS: true,
       logging: false,
+      width: 375,
+      height: 667,
     })
-
     const dataUrl = canvas.toDataURL('image/png')
     posterImageUrl.value = dataUrl
     return dataUrl
@@ -46,15 +44,12 @@ async function generatePosterImage(): Promise<string | null> {
   }
 }
 
-// 下载海报
 async function handleDownload() {
   if (isGenerating.value) return
   isGenerating.value = true
-
   try {
     const dataUrl = posterImageUrl.value || await generatePosterImage()
     if (!dataUrl) return
-
     const link = document.createElement('a')
     link.download = `MBTI-${props.type}-${props.nickname}.png`
     link.href = dataUrl
@@ -66,20 +61,15 @@ async function handleDownload() {
   }
 }
 
-// Web Share API 原生分享
 async function handleShare() {
   if (isGenerating.value) return
   isGenerating.value = true
-
   try {
     const dataUrl = posterImageUrl.value || await generatePosterImage()
     if (!dataUrl) return
-
-    // 将 dataURL 转为 File 对象
     const blob = await (await fetch(dataUrl)).blob()
     const file = new File([blob], `MBTI-${props.type}.png`, { type: 'image/png' })
 
-    // 检查是否支持 Web Share API + 文件分享
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       await navigator.share({
         title: `我的MBTI是${props.type} - ${props.nickname}`,
@@ -88,21 +78,16 @@ async function handleShare() {
         files: [file],
       })
     } else if (navigator.share) {
-      // 不支持文件分享，只分享链接和文字
       await navigator.share({
         title: `我的MBTI是${props.type} - ${props.nickname}`,
         text: `测测你的灵魂出厂设置！我的MBTI是${props.type}（${props.nickname}），你呢？\n\n"${props.quote}"`,
         url: window.location.origin,
       })
     } else {
-      // 不支持 Web Share API，降级为下载
       await handleDownload()
     }
   } catch (err: any) {
-    // 用户取消分享不算错误
     if (err.name !== 'AbortError') {
-      console.error('Share failed:', err)
-      // 降级为下载
       await handleDownload()
     }
   } finally {
@@ -110,7 +95,6 @@ async function handleShare() {
   }
 }
 
-// 复制链接
 async function handleCopyLink() {
   try {
     await navigator.clipboard.writeText(
@@ -118,7 +102,6 @@ async function handleCopyLink() {
     )
     alert('链接已复制到剪贴板！')
   } catch {
-    // 降级方案
     const text = `测测你的灵魂出厂设置！我的MBTI是${props.type}（${props.nickname}），你呢？ ${window.location.origin}`
     const input = document.createElement('input')
     input.value = text
@@ -133,56 +116,101 @@ async function handleCopyLink() {
 
 <template>
   <div>
-    <!-- 海报预览区域（隐藏，用于截图） -->
+    <!-- 海报画布（隐藏，用于截图） -->
     <div
       ref="posterRef"
-      class="poster-canvas"
-      style="display: none; width: 375px; padding: 32px; text-align: center; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #6d28d9 100%); color: #f8fafc; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;"
+      style="display:none; position:relative; width:375px; height:667px; overflow:hidden; background:linear-gradient(135deg,#1e1b4b 0%,#312e81 30%,#4c1d95 60%,#6d28d9 100%); font-family:'PingFang SC','Microsoft YaHei',sans-serif;"
     >
-      <!-- 标题 -->
-      <div style="margin-bottom: 24px;">
-        <p style="font-size: 14px; color: #94a3b8; margin-bottom: 8px;">我的 MBTI 人格是</p>
-        <h1 style="font-size: 48px; font-weight: bold; background: linear-gradient(135deg, #c084fc, #fb7185); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">{{ props.type }}</h1>
-        <p style="font-size: 18px; color: #c084fc;">{{ props.nickname }}</p>
+      <!-- 顶部小标题 -->
+      <div style="position:absolute; top:40px; left:0; width:375px; text-align:center;">
+        <span style="font-size:13px; color:#94a3b8; letter-spacing:2px;">我的 MBTI 人格是</span>
       </div>
 
-      <!-- 维度条 -->
-      <div style="margin-bottom: 24px;">
-        <div v-for="(dim, key) in props.dimensions" :key="key" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <span style="width: 24px; font-size: 14px; color: #94a3b8; text-align: right;">{{ dim.dominant }}</span>
-          <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-            <div :style="{ width: dim.percentage + '%', height: '100%', background: 'linear-gradient(90deg, #c084fc, #fb7185)', borderRadius: '4px' }" />
+      <!-- 类型大字 -->
+      <div style="position:absolute; top:68px; left:0; width:375px; text-align:center;">
+        <span style="font-size:52px; font-weight:800; background:linear-gradient(135deg,#c084fc,#fb7185); -webkit-background-clip:text; -webkit-text-fill-color:transparent; color:#c084fc;">{{ props.type }}</span>
+      </div>
+
+      <!-- 昵称 -->
+      <div style="position:absolute; top:132px; left:0; width:375px; text-align:center;">
+        <span style="font-size:16px; color:#c084fc;">{{ props.nickname }}</span>
+      </div>
+
+      <!-- 维度条区域 -->
+      <div style="position:absolute; top:180px; left:40px; width:295px;">
+        <!-- E/I -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:13px; font-weight:700; color:#e2e8f0; width:20px; text-align:right;">{{ props.dimensions.EI.dominant }}</span>
+            <span style="font-size:12px; color:#94a3b8;">{{ props.dimensions.EI.percentage }}%</span>
           </div>
-          <span style="width: 40px; font-size: 14px; color: #94a3b8; text-align: right;">{{ dim.percentage }}%</span>
+          <div style="width:295px; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+            <div :style="{ width: props.dimensions.EI.percentage + '%', height:'8px', background:'#c084fc', borderRadius:'4px' }"></div>
+          </div>
+        </div>
+        <!-- S/N -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:13px; font-weight:700; color:#e2e8f0; width:20px; text-align:right;">{{ props.dimensions.SN.dominant }}</span>
+            <span style="font-size:12px; color:#94a3b8;">{{ props.dimensions.SN.percentage }}%</span>
+          </div>
+          <div style="width:295px; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+            <div :style="{ width: props.dimensions.SN.percentage + '%', height:'8px', background:'#34d399', borderRadius:'4px' }"></div>
+          </div>
+        </div>
+        <!-- T/F -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:13px; font-weight:700; color:#e2e8f0; width:20px; text-align:right;">{{ props.dimensions.TF.dominant }}</span>
+            <span style="font-size:12px; color:#94a3b8;">{{ props.dimensions.TF.percentage }}%</span>
+          </div>
+          <div style="width:295px; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+            <div :style="{ width: props.dimensions.TF.percentage + '%', height:'8px', background:'#60a5fa', borderRadius:'4px' }"></div>
+          </div>
+        </div>
+        <!-- J/P -->
+        <div style="margin-bottom:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:13px; font-weight:700; color:#e2e8f0; width:20px; text-align:right;">{{ props.dimensions.JP.dominant }}</span>
+            <span style="font-size:12px; color:#94a3b8;">{{ props.dimensions.JP.percentage }}%</span>
+          </div>
+          <div style="width:295px; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+            <div :style="{ width: props.dimensions.JP.percentage + '%', height:'8px', background:'#fbbf24', borderRadius:'4px' }"></div>
+          </div>
         </div>
       </div>
 
-      <!-- 标签 -->
-      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 24px;">
+      <!-- 标签区域 -->
+      <div style="position:absolute; top:370px; left:0; width:375px; text-align:center;">
         <span
-          v-for="tag in props.hiddenTags"
+          v-for="(tag, i) in props.hiddenTags"
           :key="tag"
-          style="padding: 4px 12px; font-size: 12px; border-radius: 999px; background: rgba(255,255,255,0.1);"
-        >
-          {{ tag }}
-        </span>
+          :style="{
+            display:'inline-block',
+            padding:'5px 14px',
+            fontSize:'12px',
+            color:'#e2e8f0',
+            background:'rgba(255,255,255,0.1)',
+            borderRadius:'20px',
+            margin: i < props.hiddenTags.length - 1 ? '0 6px 0 0' : '0',
+          }"
+        >{{ tag }}</span>
       </div>
 
-      <!-- 金句 -->
-      <div style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin-bottom: 24px;">
-        <p style="font-size: 14px; color: #cbd5e1; font-style: italic;">"{{ props.quote }}"</p>
+      <!-- 金句卡片 -->
+      <div style="position:absolute; top:420px; left:40px; width:295px; background:rgba(255,255,255,0.08); border-radius:16px; padding:18px 16px;">
+        <p style="margin:0; font-size:13px; color:#cbd5e1; font-style:italic; line-height:1.6; text-align:center;">"{{ props.quote }}"</p>
       </div>
 
-      <!-- 底部引导 -->
-      <div style="font-size: 12px; color: #64748b;">
-        <p>扫码测测你的 MBTI</p>
-        <p style="margin-top: 4px; opacity: 0.6;">16 型人格，但加了点怪东西</p>
+      <!-- 底部引导文案 -->
+      <div style="position:absolute; bottom:50px; left:0; width:375px; text-align:center;">
+        <p style="margin:0 0 6px 0; font-size:13px; color:#94a3b8;">扫码测测你的 MBTI</p>
+        <p style="margin:0; font-size:11px; color:#64748b;">16 型人格，但加了点怪东西</p>
       </div>
     </div>
 
     <!-- 操作按钮组 -->
     <div class="space-y-3">
-      <!-- 主要操作：分享 -->
       <button
         class="w-full py-3.5 rounded-2xl font-bold text-white transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
         style="background: linear-gradient(135deg, #c084fc, #fb7185);"
@@ -194,7 +222,6 @@ async function handleCopyLink() {
         <span>{{ isGenerating ? '生成中...' : '分享给好友' }}</span>
       </button>
 
-      <!-- 次要操作 -->
       <div class="flex gap-3">
         <button
           class="flex-1 py-3 rounded-2xl font-medium glass text-text-secondary hover:text-text-primary transition-all duration-300 flex items-center justify-center gap-2"
